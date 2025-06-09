@@ -1,0 +1,9 @@
+{
+  "afar.config.title": "Afar Config",
+  "afar.config.option.radius": "Chunk Radius",
+  "afar.config.option.radius.dic": "The maximum render distance, which will take effect when you re-enter the server",
+  "afar.config.option.enable": "Enable",
+  "afar.config.option.enable.dic": "Note that this mod §cdoes not§f work in single-player mode!",
+  "afar.config.option.render_distance": "Render Distance",
+  "afar.config.option.render_distance.dic": ""
+}

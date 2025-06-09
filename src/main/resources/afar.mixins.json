@@ -1,0 +1,19 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "me.linstar.afar.mixin",
+  "compatibilityLevel": "JAVA_16",
+  "refmap": "afar.refmap.json",
+  "mixins": [
+    "compat.ChunkAccessMixin"
+  ],
+  "client": [
+    "ClientPacketListenerMixin",
+    "OptionsMixin",
+    "OptionsScreenMixin",
+    "accessor.LevelChunkPacketDataAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
