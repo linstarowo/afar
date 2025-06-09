@@ -1,5 +1,5 @@
 ## Afar     
-A faster, lighter block caching solution for minecraft
+A faster, lighter chunk caching solution for minecraft
 ### feature
 - Listen and forge data packets at ClientPacketListenr
 - Using key-value database to storge chunk data. Faster than traditional IO
