@@ -1,20 +1,11 @@
 package me.linstar.afar;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.Item;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
-import net.minecraftforge.registries.ForgeRegistries;
 
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-// An example config class. This is not required, but it's a good idea to have one to keep your config organized.
-// Demonstrates how to use Forge's config APIs
 @Mod.EventBusSubscriber(modid = Afar.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class Config {
     private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
@@ -50,10 +41,6 @@ public class Config {
         return enable && !Minecraft.getInstance().isLocalServer();
     }
 
-//    public static int getChunkRadius(){
-//        return currentChunkRadius;
-//    }
-
     public static int getRenderDistance(){
         return renderDistance;
     }
@@ -61,10 +48,6 @@ public class Config {
     public static void setEnabled(final boolean enabled){
         Config.enable = enabled;
     }
-
-//    public static void setChunkRadius(final int radius){
-//        Config.currentChunkRadius = radius;
-//    }
 
     public static void setRenderDistance(int renderDistance) {
         Config.renderDistance = renderDistance;

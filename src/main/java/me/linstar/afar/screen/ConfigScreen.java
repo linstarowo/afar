@@ -1,7 +1,5 @@
 package me.linstar.afar.screen;
 
-import me.jellysquid.mods.sodium.client.gui.SodiumGameOptions;
-import me.jellysquid.mods.sodium.client.render.SodiumWorldRenderer;
 import me.linstar.afar.Config;
 import me.linstar.afar.network.WrappedSetRadiusPacket;
 import net.minecraft.client.Minecraft;
@@ -11,7 +9,6 @@ import net.minecraft.client.gui.components.OptionsList;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ClientboundSetChunkCacheRadiusPacket;
 import org.jetbrains.annotations.NotNull;
 
 import static net.minecraft.client.Options.genericValueLabel;

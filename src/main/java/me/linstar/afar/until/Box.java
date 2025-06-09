@@ -1,8 +1,6 @@
 package me.linstar.afar.until;
 
-import java.awt.*;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 public class Box {
     final int minX, minY, maxX, maxY;

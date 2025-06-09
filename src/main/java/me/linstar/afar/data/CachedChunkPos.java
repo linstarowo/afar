@@ -1,7 +1,6 @@
 package me.linstar.afar.data;
 
 import io.netty.buffer.Unpooled;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 
 public record CachedChunkPos(int x, int z) {
