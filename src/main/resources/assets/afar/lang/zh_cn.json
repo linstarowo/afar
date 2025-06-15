@@ -1,7 +1,5 @@
 {
   "afar.config.title": "Afar 配置",
-  "afar.config.option.radius": "Chunk Radius",
-  "afar.config.option.radius.dic": "允许视距的最大值, 将在重新进入服务器后生效",
   "afar.config.option.enable": "Enable",
   "afar.config.option.enable.dic": "§c注意!§f 此模组不会在单人模式生效",
   "afar.config.option.render_distance": "Render Distance",

@@ -24,7 +24,8 @@ public class ChunkCacheManager {  //史诗级单例 长生命周期
 
     private ChunkDataBase dataBase;
 //    private final Set<int[]> SERVER_FORGET_CHUNKS = ConcurrentHashMap.newKeySet();
-    private final Set<int[]> LOADED_FAKE_CHUNKS = ConcurrentHashMap.newKeySet();
+
+    private final Set<int[]> SUBMITTED_FAKE_CHUNKS = ConcurrentHashMap.newKeySet();
 
     volatile int centralX;
     volatile int centralZ;
@@ -84,18 +85,23 @@ public class ChunkCacheManager {  //史诗级单例 长生命周期
 //           return true;
 //        });
 
-        LOADED_FAKE_CHUNKS.removeIf(pos -> {
+        SUBMITTED_FAKE_CHUNKS.removeIf(pos -> {
             if (nev.contain(pos[0], pos[1])) return false;;
             this.forgetChunk(pos[0], pos[1]);
             return true;
         });
+
+
+
     }
 
     private void loadChunk(int x, int z){
         var connection = Minecraft.getInstance().getConnection();
         if (connection == null) return;
-        dataBase.get(x, z).thenAccept(connection::handleLevelChunkWithLight);
-        LOADED_FAKE_CHUNKS.add(new int[]{x, z});
+        SUBMITTED_FAKE_CHUNKS.add(new int[]{x, z});
+        dataBase.get(x, z).thenAccept(packet -> Minecraft.getInstance().execute(() -> {
+            Minecraft.getInstance().getConnection().handleLevelChunkWithLight(packet);
+        }));
     }
 
     private void forgetChunk(int x, int z){
@@ -113,15 +119,16 @@ public class ChunkCacheManager {  //史诗级单例 长生命周期
         this.realChunkRadius = radius;
     }
 
-//    private void onTick(){
-//        if (!isStarted) return;
-//    }
+    public int getRealChunkRadius(){
+        if (realChunkRadius == -1) throw new RuntimeException("Getting real chunk radius when not started");
+        return realChunkRadius;
+    }
 
     public void onDimensionChange(String dimension){
         if (!isStarted) return;
         try {
 //            SUBMITTED_CHUNKS.clear();
-            LOADED_FAKE_CHUNKS.clear();
+            SUBMITTED_FAKE_CHUNKS.clear();
             dataBase.switchDimension(dimension);
         }catch (Exception e){
             LOGGER.error("Failed to switch dimension", e);
@@ -138,7 +145,7 @@ public class ChunkCacheManager {  //史诗级单例 长生命周期
     public static void onDisconnected(ClientPlayerNetworkEvent.LoggingOut event){
         if (!Config.isEnable()) return;
         INSTANCE.stop();
-        INSTANCE.LOADED_FAKE_CHUNKS.clear();
+        INSTANCE.SUBMITTED_FAKE_CHUNKS.clear();
         INSTANCE.realChunkRadius = -1;
     }
 }

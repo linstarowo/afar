@@ -24,7 +24,7 @@ public class ChunkDataBase {
     protected static final Path DATA_PATH = FMLPaths.MODSDIR.get().toAbsolutePath();
     protected static final Options DATA_OPTIONS = new Options().setCreateIfMissing(true);
 
-    private final ThreadPoolExecutor EXECUTOR = new ThreadPoolExecutor(4, 8, 1L, TimeUnit.SECONDS, new LinkedBlockingQueue<>());  //先进先出
+    private final ThreadPoolExecutor EXECUTOR = new ThreadPoolExecutor(4, 8, 1L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());  //先进先出
 
     private final String SERVER_NAME;
     RocksDB rocksDB;
