@@ -13,6 +13,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.slf4j.Logger;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -21,33 +22,30 @@ public class ChunkCacheManager {  //史诗级单例 长生命周期
 
     public static final ChunkCacheManager INSTANCE = new ChunkCacheManager();
     private static final Logger LOGGER = LogUtils.getLogger();
-
-    private ChunkDataBase dataBase;
-//    private final Set<int[]> SERVER_FORGET_CHUNKS = ConcurrentHashMap.newKeySet();
-
     private final Set<int[]> SUBMITTED_FAKE_CHUNKS = ConcurrentHashMap.newKeySet();
 
+    private ChunkDataBase dataBase;
+    private Minecraft minecraft;
     volatile int centralX;
     volatile int centralZ;
-
     int realChunkRadius = -1;
-
     boolean isStarted = false;
 
     public ChunkCacheManager() {}
 
     public void start(){
         try {
-            var currentServer = Minecraft.getInstance().getCurrentServer();
-            var serverName = currentServer.ip.replace(":", "_");
-            var chunkPos = Minecraft.getInstance().player.chunkPosition();
+            this.minecraft = Minecraft.getInstance();
+            var serverName = Objects.requireNonNull(minecraft.getCurrentServer()).ip.replace(":", "_");
+            var chunkPos = Objects.requireNonNull(minecraft.player).chunkPosition();
             dataBase = new ChunkDataBase(serverName);
             dataBase.switchDimension();
+
             centralX = chunkPos.x;
             centralZ = chunkPos.z;
             isStarted = true;
         }catch (Exception e){
-            LOGGER.error("Failed to start chunk cache", e);
+            LOGGER.error("Failed to start chunk caching", e);
         }
     }
 
@@ -64,12 +62,10 @@ public class ChunkCacheManager {  //史诗级单例 长生命周期
 
     public void onViewCenterPacket(int x, int z){
         if (!isStarted) return;
-
         if (centralX == x && centralZ == z) return;
 
         Box old = Box.create(centralX, centralZ, Config.getRenderDistance());
         Box nev = Box.create(x, z , Config.getRenderDistance());
-
         Box server_new = Box.create(x, z, realChunkRadius);
 
         centralX = x;
@@ -79,49 +75,41 @@ public class ChunkCacheManager {  //史诗级单例 长生命周期
             if (!old.contain(x1, z1) && !server_new.contain(x1, z1)) loadChunk(x1, z1);
         });
 
-//        SERVER_FORGET_CHUNKS.removeIf(pos -> {
-//           if (nev.contain(pos[0], pos[1])) return false;
-//           this.forgetChunk(pos[0], pos[1]);
-//           return true;
-//        });
-
         SUBMITTED_FAKE_CHUNKS.removeIf(pos -> {
             if (nev.contain(pos[0], pos[1])) return false;;
             this.forgetChunk(pos[0], pos[1]);
             return true;
         });
-
-
-
     }
 
     private void loadChunk(int x, int z){
-        var connection = Minecraft.getInstance().getConnection();
+        var connection = minecraft.getConnection();
         if (connection == null) return;
-        SUBMITTED_FAKE_CHUNKS.add(new int[]{x, z});
-        dataBase.get(x, z).thenAccept(packet -> Minecraft.getInstance().execute(() -> {
-            Minecraft.getInstance().getConnection().handleLevelChunkWithLight(packet);
+        dataBase.get(x, z).thenAccept(packet -> minecraft.execute(() -> {
+            if (!isInClientView(x, z)) return;
+            connection.handleLevelChunkWithLight(packet);
+            SUBMITTED_FAKE_CHUNKS.add(new int[]{x, z});
         }));
     }
 
     private void forgetChunk(int x, int z){
-        var connection = Minecraft.getInstance().getConnection();
+        var connection = minecraft.getConnection();
         if (connection != null) {
             connection.handleForgetLevelChunk(new WrappedForgetChunkPacket(x, z));
         }
     }
 
-    public void onServerForgetChunk(int x, int z){
-//        SERVER_FORGET_CHUNKS.add(new int[]{x, z});
-    }
-
-    public void onServerRadiusChange(int radius){
-        this.realChunkRadius = radius;
+    private boolean isInClientView(int x, int z){
+        return Math.abs(x- centralZ) <= Config.getRenderDistance() && Math.abs(z- centralX) <= Config.getRenderDistance();
     }
 
     public int getRealChunkRadius(){
         if (realChunkRadius == -1) throw new RuntimeException("Getting real chunk radius when not started");
         return realChunkRadius;
+    }
+
+    public void onServerRadiusChange(int radius){
+        this.realChunkRadius = radius;
     }
 
     public void onDimensionChange(String dimension){

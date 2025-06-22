@@ -32,6 +32,8 @@ public class ConfigScreen extends Screen {
         Minecraft.getInstance().levelRenderer.allChanged();
     });
 
+    OptionInstance<Boolean> DEBUG = OptionInstance.createBoolean("afar.config.option.debug", Config.isDebug(), Config::setDebug);
+
     protected ConfigScreen(Screen parent) {
         super(Component.translatable("afar.config.title"));
         this.parent = parent;
@@ -44,6 +46,7 @@ public class ConfigScreen extends Screen {
         this.list = new OptionsList(this.minecraft, this.width, this.height, 32, this.height - 32, 25);
         list.addBig(ENABLE);
         list.addBig(RENDER_DISTANCE);
+        list.addSmall(new OptionInstance[]{DEBUG});
         this.addWidget(this.list);
     }
 

@@ -42,7 +42,7 @@ public class ClientPacketListenerMixin {
     public void onChunkUnload(ClientboundForgetLevelChunkPacket packet, CallbackInfo info){
         if (!Config.isEnable()) return;
         if (packet instanceof WrappedPacket) return;
-        ChunkCacheManager.INSTANCE.onServerForgetChunk(packet.getX(), packet.getZ());
+//        ChunkCacheManager.INSTANCE.onServerForgetChunk(packet.getX(), packet.getZ());
         info.cancel();
     }
 
