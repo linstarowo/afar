@@ -85,8 +85,8 @@ dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
-    compileOnly 'org.rocksdb:rocksdbjni:10.2.1'
-    minecraftLibrary 'org.rocksdb:rocksdbjni:10.2.1'
+    compileOnly("org.xerial:sqlite-jdbc:3.47.2.0")
+    minecraftLibrary("org.xerial:sqlite-jdbc:3.47.2.0")
 
     implementation(fg.deobf("curse.maven:rubidium-574856:4573226"))
 

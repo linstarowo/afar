@@ -1,5 +1,6 @@
-package me.linstar.afar;
+package me.linstar.afar.config;
 
+import me.linstar.afar.Afar;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -12,11 +13,14 @@ public class Config {
 
     private static final ForgeConfigSpec.BooleanValue ENABLE = BUILDER.comment("Enable mod").define("enable", true);
     private static final ForgeConfigSpec.ConfigValue<Integer> RENDER_DISTANCE = BUILDER.comment("The view distance of fake chunks").define("render_distance", 8);
+    private static final ForgeConfigSpec.ConfigValue<Integer> MAX_CHUNK_LOADING_PER_TICK = BUILDER.comment("The maximum count of fake chunks loading per tick").define("max_chunk_loading_per_tick", 5);
 
-    static final ForgeConfigSpec SPEC = BUILDER.build();
+    public static final ForgeConfigSpec SPEC = BUILDER.build();
 
     static boolean enable = false;
     static int renderDistance = 8;
+    static int maxChunkLoadingPerTick = 5;
+
     static boolean debug = false;  //never save
 
 
@@ -24,14 +28,17 @@ public class Config {
     static void onLoad(final ModConfigEvent event) {
         enable = ENABLE.get();
         renderDistance = RENDER_DISTANCE.get();
+        maxChunkLoadingPerTick = MAX_CHUNK_LOADING_PER_TICK.get();
     }
 
     public static void save(){
         ENABLE.set(enable);
         RENDER_DISTANCE.set(renderDistance);
+        MAX_CHUNK_LOADING_PER_TICK.set(maxChunkLoadingPerTick);
 
         ENABLE.save();
         RENDER_DISTANCE.save();
+        MAX_CHUNK_LOADING_PER_TICK.save();
     }
 
     public static boolean isEnable(){
@@ -56,5 +63,13 @@ public class Config {
 
     public static void setDebug(boolean debug){
         Config.debug = debug;
+    }
+
+    public static int getMaxChunkLoadingPerTick(){
+        return maxChunkLoadingPerTick;
+    }
+
+    public static void setMaxChunkLoadingPerTick(int maxChunkLoadingPerTick){
+        Config.maxChunkLoadingPerTick = maxChunkLoadingPerTick;
     }
 }

@@ -3,5 +3,9 @@
   "afar.config.option.enable": "Enable",
   "afar.config.option.enable.dic": "Note that this mod §cdoes not§f work in single-player mode!",
   "afar.config.option.render_distance": "Render Distance",
-  "afar.config.option.render_distance.dic": ""
+  "afar.config.option.render_distance.dic": "",
+  "afar.config.option.debug": "Debug Mode",
+  "afar.config.option.max_fake_chunk_loading": "加载限制",
+  "afar.config.option.max_fake_chunk_loading.dic": "每Tick 加载加区块数目的最大值, 不宜过大或过小",
+  "afar.config.option.chunk_per_tick": "%s chunk/tick"
 }

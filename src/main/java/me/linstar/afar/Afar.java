@@ -1,36 +1,69 @@
 package me.linstar.afar;
 
-import com.mojang.logging.LogUtils;
+import io.netty.buffer.ByteBuf;
+import me.linstar.afar.config.Config;
+import me.linstar.afar.event.ChunkCacheRadiusEvent;
+import me.linstar.afar.screen.ConfigScreen;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.ConfigScreenHandler;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import org.slf4j.Logger;
+
+import javax.annotation.Nullable;
+import java.nio.charset.StandardCharsets;
 
 @Mod(Afar.MOD_ID)
 public class Afar {
     public static final String MOD_ID = "afar";
     public static final ResourceLocation ICON_TEXTURE = new ResourceLocation(MOD_ID, "textures/gui/icon.png");
-    private static final Logger LOGGER = LogUtils.getLogger();
+    public static final ConfigScreenHandler.ConfigScreenFactory CONFIG_SCREEN_FACTORY = new ConfigScreenHandler.ConfigScreenFactory((mc, screen) -> ConfigScreen.get(screen));
+    public static final ResourceLocation WORLD_ID_CHANNEL = new ResourceLocation("worldinfo", "world_id");
+    private static int serverRadius = -1;
 
     public Afar() {
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
         MinecraftForge.EVENT_BUS.register(this);
         ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, Config.SPEC);
+        ModLoadingContext.get().registerExtensionPoint(CONFIG_SCREEN_FACTORY.getClass(), () -> CONFIG_SCREEN_FACTORY);
     }
 
-    @Mod.EventBusSubscriber(modid = MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
-    public static class ClientModEvents {
-
-        @SubscribeEvent
-        public static void onClientSetup(FMLClientSetupEvent event) {
-
+    @Nullable
+    public static String parseWorldId(ByteBuf buf){
+        try {
+            buf.readByte();
+            int length;
+            int b = buf.readUnsignedByte();
+            if (b == 42) {
+                length = buf.readUnsignedByte();
+            } else if (b == 0) {
+                return null;
+            } else {
+                length = b;
+            }
+            byte[] bytes = new byte[length];
+            buf.readBytes(bytes);
+            return new String(bytes, StandardCharsets.UTF_8);
+        }catch (Exception e){
+            return null;
         }
+    }
+
+    @SubscribeEvent
+    public void onServerRadiusChanged(ChunkCacheRadiusEvent event){
+        serverRadius = event.getRadius();
+    }
+
+    @SubscribeEvent
+    public void onDisconnected(ClientPlayerNetworkEvent.LoggingOut event){
+        serverRadius = -1;
+    }
+
+    public static int getServerRadius(){
+        return serverRadius;
     }
 }

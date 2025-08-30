@@ -3,5 +3,9 @@
   "afar.config.option.enable": "Enable",
   "afar.config.option.enable.dic": "§c注意!§f 此模组不会在单人模式生效",
   "afar.config.option.render_distance": "Render Distance",
-  "afar.config.option.render_distance.dic": "假区块的渲染距离"
+  "afar.config.option.render_distance.dic": "假区块的渲染距离",
+  "afar.config.option.debug": "Debug 模式",
+  "afar.config.option.max_fake_chunk_loading": "加载限制",
+  "afar.config.option.max_fake_chunk_loading.dic": "每Tick 加载加区块数目的最大值, 不宜过大或过小",
+  "afar.config.option.chunk_per_tick": "%s chunk/tick"
 }

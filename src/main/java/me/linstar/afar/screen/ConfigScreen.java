@@ -1,7 +1,8 @@
 package me.linstar.afar.screen;
 
-import me.linstar.afar.ChunkCacheManager;
-import me.linstar.afar.Config;
+import me.linstar.afar.Afar;
+import me.linstar.afar.ChunkCachingManager;
+import me.linstar.afar.config.Config;
 import me.linstar.afar.network.WrappedSetRadiusPacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.OptionInstance;
@@ -21,16 +22,23 @@ public class ConfigScreen extends Screen {
     OptionsList list;
     OptionInstance<Boolean> ENABLE = OptionInstance.createBoolean("afar.config.option.enable", value -> Tooltip.create(Component.translatable("afar.config.option.enable.dic")), Config.isEnable(), value -> {
         Config.setEnabled(value);
-        var connection = Minecraft.getInstance().getConnection();
-        if (connection != null && !value) connection.handleSetChunkCacheRadius(new WrappedSetRadiusPacket(ChunkCacheManager.INSTANCE.getRealChunkRadius()));
-        Minecraft.getInstance().levelRenderer.allChanged();
+        if (value) {
+            ChunkCachingManager.get().start();
+            Minecraft.getInstance().levelRenderer.allChanged();
+        }else {
+            ChunkCachingManager.get().stop();
+            var connection = Minecraft.getInstance().getConnection();
+            if (connection != null)
+                connection.handleSetChunkCacheRadius(new WrappedSetRadiusPacket(Afar.getServerRadius()));
+        }
     });
-    OptionInstance<Integer> RENDER_DISTANCE = new OptionInstance<>("afar.config.option.render_distance", value -> Tooltip.create(Component.translatable("afar.config.option.render_distance.dic")), (p_231962_, p_268036_) -> genericValueLabel(p_231962_, Component.translatable("options.chunks", p_268036_)), new OptionInstance.IntRange(2, 32), Config.getRenderDistance(), (value) -> {
+    OptionInstance<Integer> RENDER_DISTANCE = new OptionInstance<>("afar.config.option.render_distance", value -> Tooltip.create(Component.translatable("afar.config.option.render_distance.dic")), (name, value) -> genericValueLabel(name, Component.translatable("options.chunks", value)), new OptionInstance.IntRange(2, 32), Config.getRenderDistance(), (value) -> {
         Config.setRenderDistance(value);
         var connection = Minecraft.getInstance().getConnection();
         if (connection != null) connection.handleSetChunkCacheRadius(new WrappedSetRadiusPacket(value));
         Minecraft.getInstance().levelRenderer.allChanged();
     });
+    OptionInstance<Integer> MAX_CHUNK_LOADING = new OptionInstance<>("afar.config.option.max_fake_chunk_loading", value -> Tooltip.create(Component.translatable("afar.config.option.max_fake_chunk_loading.dic")), (name, value) -> genericValueLabel(name, Component.translatable("afar.config.option.chunk_per_tick", value)), new OptionInstance.IntRange(2, 64), Config.getMaxChunkLoadingPerTick(), Config::setMaxChunkLoadingPerTick);
 
     OptionInstance<Boolean> DEBUG = OptionInstance.createBoolean("afar.config.option.debug", Config.isDebug(), Config::setDebug);
 
@@ -46,7 +54,7 @@ public class ConfigScreen extends Screen {
         this.list = new OptionsList(this.minecraft, this.width, this.height, 32, this.height - 32, 25);
         list.addBig(ENABLE);
         list.addBig(RENDER_DISTANCE);
-        list.addSmall(new OptionInstance[]{DEBUG});
+        list.addSmall(new OptionInstance[]{DEBUG, MAX_CHUNK_LOADING});
         this.addWidget(this.list);
     }
 

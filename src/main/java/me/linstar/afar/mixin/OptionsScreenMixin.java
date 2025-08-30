@@ -18,6 +18,7 @@ public class OptionsScreenMixin extends Screen {
         super(p_96550_);
     }
 
+    //在配置页面添加配置按钮
     @Inject(at = @At("HEAD"), method = "init")
     private void lodconfig$init(CallbackInfo ci) {
         this.addRenderableWidget(

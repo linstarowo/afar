@@ -14,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+//避免因为重载区块导致的 BlockEntity并发修改问题
 @Mixin(ChunkAccess.class)
 public class ChunkAccessMixin {
     @Mutable
