@@ -12,6 +12,7 @@ plugins {
     id 'eclipse'
     id 'idea'
     id 'net.minecraftforge.gradle' version '[6.0.16,6.2)'
+    id 'com.gradleup.shadow' version '8.3.0'
 }
 
 apply plugin: 'org.spongepowered.mixin'
@@ -76,9 +77,13 @@ mixin {
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 repositories {
-    maven {
-        url "https://cursemaven.com"
-    }
+    maven { url = "https://cursemaven.com" }
+//    maven { url = "https://api.modrinth.com/maven" }
+}
+
+configurations {
+    shade
+    implementation.extendsFrom shade
 }
 
 dependencies {
@@ -89,6 +94,7 @@ dependencies {
     minecraftLibrary("org.xerial:sqlite-jdbc:3.47.2.0")
 
     implementation(fg.deobf("curse.maven:rubidium-574856:4573226"))
+//    implementation(fg.deobf("maven.modrinth:minecraft-sqlite-jdbc:3.49.1.0"))
 
     implementation(annotationProcessor("io.github.llamalad7:mixinextras-common:0.4.1"))
     implementation(jarJar("io.github.llamalad7:mixinextras-forge:0.4.1")){
@@ -111,6 +117,7 @@ tasks.named('processResources', ProcessResources).configure {
 }
 
 tasks.named('jar', Jar).configure {
+    archiveClassifier = 'slim'
     manifest {
         attributes(["Specification-Title"     : mod_id,
                     "Specification-Vendor"    : mod_authors,
@@ -121,16 +128,51 @@ tasks.named('jar', Jar).configure {
                     "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")])
     }
 
-    from { configurations.minecraftLibrary.collect { it.isDirectory() ? it : zipTree(it) } }
-    into('assets') {
-        from 'assets'
-    }
+//    from { configurations.minecraftLibrary.collect { it.isDirectory() ? it : zipTree(it) } }
+//    into('assets') {
+//        from 'assets'
+//    }
 
     // This is the preferred method to reobfuscate your jar file
     finalizedBy 'reobfJar'
 }
 
+shadowJar {
+//    dependencies {
+//        include(dependency("org.xerial:sqlite-jdbc:3.47.2.0"))
+//    }
+
+//    relocate("org.sqlite", "afar.sqlite"){
+//        exclude "org/sqlite/native/**"
+//    }
+//    relocate "jdbc:sqlite", "jdbc:afar_sqlite"
+//    transform(NativeTransformer) {
+//        rootDir = project.rootDir
+//        relocateNative "org/sqlite", "afar_sqlite"
+//        relocateNative "org_sqlite", "afar_1sqlite"
+//    }
+
+
+    configurations = [project.configurations.shade]
+    finalizedBy 'reobfShadowJar'
+}
+
+assemble.dependsOn shadowJar
+
+reobf {
+    shadowJar {}
+}
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
 }
+
+tasks.named('jarJar', Jar) {
+    from sourceSets.main.output
+    from zipTree(tasks.shadowJar.outputs.files.singleFile)
+//    from configurations.jarJar.collect { it.isDirectory() ? it : zipTree(it) }
+    archiveClassifier.set('')
+}
+
+tasks.jarJar.dependsOn(tasks.shadowJar)
+build.dependsOn(tasks.jarJar)

@@ -6,6 +6,14 @@
   "afar.config.option.render_distance.dic": "",
   "afar.config.option.debug": "Debug Mode",
   "afar.config.option.max_fake_chunk_loading": "加载限制",
-  "afar.config.option.max_fake_chunk_loading.dic": "每Tick 加载加区块数目的最大值, 不宜过大或过小",
-  "afar.config.option.chunk_per_tick": "%s chunk/tick"
+  "afar.config.option.max_fake_chunk_loading.dic": "每Tick 加载假区块数目的最大值, 不宜过大或过小",
+  "afar.config.option.max_fake_chunk_saving": "保存限制",
+  "afar.config.option.max_fake_chunk_saving.dic": "每Tick 保存假区块数目的最大值, 不宜过大或过小",
+  "afar.config.option.chunk_save_threshold": "保存阈值",
+  "afar.config.option.chunk_save_threshold.dic": "触发数据库提交的区块数量阈值, 高阈值可以带来更快的加载速度, 但也会增加内存占用",
+  "afar.config.option.chunk_per_tick": "%s chunk/tick",
+
+  "afar.command.check_running_statue": "Afar 未在运行",
+  "afar.command.prepare_vacuum": "正在优化数据库, 可能面临卡顿",
+  "afar.command.vacuum_finished": "执行完成"
 }

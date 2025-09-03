@@ -38,7 +38,9 @@ public class ConfigScreen extends Screen {
         if (connection != null) connection.handleSetChunkCacheRadius(new WrappedSetRadiusPacket(value));
         Minecraft.getInstance().levelRenderer.allChanged();
     });
-    OptionInstance<Integer> MAX_CHUNK_LOADING = new OptionInstance<>("afar.config.option.max_fake_chunk_loading", value -> Tooltip.create(Component.translatable("afar.config.option.max_fake_chunk_loading.dic")), (name, value) -> genericValueLabel(name, Component.translatable("afar.config.option.chunk_per_tick", value)), new OptionInstance.IntRange(2, 64), Config.getMaxChunkLoadingPerTick(), Config::setMaxChunkLoadingPerTick);
+    OptionInstance<Integer> MAX_CHUNK_LOADING = new OptionInstance<>("afar.config.option.max_fake_chunk_loading", value -> Tooltip.create(Component.translatable("afar.config.option.max_fake_chunk_loading.dic")), (name, value) -> genericValueLabel(name, Component.translatable("afar.config.option.chunk_per_tick", value)), new OptionInstance.IntRange(2, 32), Config.getMaxChunkLoadingPerTick(), Config::setMaxChunkLoadingPerTick);
+    OptionInstance<Integer> MAX_CHUNK_SAVING = new OptionInstance<>("afar.config.option.max_fake_chunk_saving", value -> Tooltip.create(Component.translatable("afar.config.option.max_fake_chunk_saving.dic")), (name, value) -> genericValueLabel(name, Component.translatable("afar.config.option.chunk_per_tick", value)), new OptionInstance.IntRange(2, 32), Config.getMaxChunkSavingPerTick(), Config::setMaxChunkSavingPerTick);
+    OptionInstance<Integer> CHUNK_SAVE_THRESHOLD = new OptionInstance<>("afar.config.option.chunk_save_threshold", value -> Tooltip.create(Component.translatable("afar.config.option.chunk_save_threshold.dic")), (name, value) -> genericValueLabel(name, Component.translatable("options.chunks", value)), new OptionInstance.IntRange(2, 16), Config.getSavingChunkThreshold(), Config::setSavingChunkThreshold);
 
     OptionInstance<Boolean> DEBUG = OptionInstance.createBoolean("afar.config.option.debug", Config.isDebug(), Config::setDebug);
 
@@ -54,7 +56,7 @@ public class ConfigScreen extends Screen {
         this.list = new OptionsList(this.minecraft, this.width, this.height, 32, this.height - 32, 25);
         list.addBig(ENABLE);
         list.addBig(RENDER_DISTANCE);
-        list.addSmall(new OptionInstance[]{DEBUG, MAX_CHUNK_LOADING});
+        list.addSmall(new OptionInstance[]{MAX_CHUNK_LOADING, MAX_CHUNK_SAVING, CHUNK_SAVE_THRESHOLD, DEBUG});
         this.addWidget(this.list);
     }
 

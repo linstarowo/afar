@@ -3,7 +3,9 @@ package me.linstar.afar;
 import com.mojang.logging.LogUtils;
 import io.netty.buffer.Unpooled;
 import me.linstar.afar.config.Config;
+import me.linstar.afar.event.ClientLevelChangeEvent;
 import me.linstar.afar.event.ClientReceivedChunkPacketEvent;
+import me.linstar.afar.event.ClientReceivedForgetChunkEvent;
 import me.linstar.afar.event.WorldIdEvent;
 import me.linstar.afar.network.WrappedForgetChunkPacket;
 import me.linstar.afar.until.Box;
@@ -37,7 +39,7 @@ public class ChunkCachingManager {
     final AtomicReference<String> currentWorldId = new AtomicReference<>();
     final AtomicReference<ChunkPos> currentCentre = new AtomicReference<>();
 
-    public final ConcurrentLinkedQueue<ChunkData> receivedChunkDataQueue = new ConcurrentLinkedQueue<>();
+    protected final ConcurrentLinkedQueue<ChunkData> receivedChunkDataQueue = new ConcurrentLinkedQueue<>();
     protected final ConcurrentLinkedQueue<ChunkPos> chunkLoadQueue = new ConcurrentLinkedQueue<>();
 
     final Set<ChunkPos> loadedChunks = ConcurrentHashMap.newKeySet();
@@ -45,7 +47,7 @@ public class ChunkCachingManager {
 
     SqliteChunkDataBase database;
 
-    enum Statue{
+    public enum Statue{
         STOP(),
         RUNNING(),
         PAUSED()
@@ -70,9 +72,9 @@ public class ChunkCachingManager {
             assert database != null;
             database.start();
 
-            if (currentStatue.get() == Statue.STOP) MinecraftForge.EVENT_BUS.register(this);
+            var lastStatue = currentStatue.getAndSet(Statue.RUNNING);
+            if (lastStatue == Statue.STOP) MinecraftForge.EVENT_BUS.register(this);
 
-            currentStatue.set(Statue.RUNNING);
         }catch (Exception e){
             LOGGER.error("Failed to start chunk caching", e);
         }
@@ -83,6 +85,7 @@ public class ChunkCachingManager {
         try {
             MinecraftForge.EVENT_BUS.unregister(this);
             currentStatue.set(Statue.STOP);
+            currentCentre.set(null);
             currentWorldId.set(null);
 
             database.close();
@@ -96,6 +99,18 @@ public class ChunkCachingManager {
 
     public static ChunkCachingManager get(){
         return INSTANCE.get();
+    }
+
+    @SubscribeEvent
+    public void onDimensionChange(ClientLevelChangeEvent event){
+        this.currentStatue.set(Statue.PAUSED);
+        currentWorldId.set(null);
+        currentCentre.set(null);
+
+        database.close();
+        receivedChunkDataQueue.clear();
+        chunkLoadQueue.clear();
+        loadedChunks.clear();
     }
 
     @SubscribeEvent
@@ -127,7 +142,6 @@ public class ChunkCachingManager {
                 if (nev.contain(pos.x, pos.z)) return false;
                 minecraft.executeIfPossible(() -> {
                     connection.handleForgetLevelChunk(new WrappedForgetChunkPacket(pos.x, pos.z));
-                    loadedChunks.remove(pos);
                 });
                 return true;
             });
@@ -141,6 +155,13 @@ public class ChunkCachingManager {
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         packet.write(buf);
         receivedChunkDataQueue.add(new ChunkData(packet.getX(), packet.getZ(), buf));
+    }
+
+    @SubscribeEvent
+    public void onChunkForgetReceived(ClientReceivedForgetChunkEvent event){
+        if (currentStatue.get() != Statue.RUNNING) return;
+        var packet = event.getPacket();
+        loadedChunks.add(new ChunkPos(packet.getX(), packet.getZ()));
     }
 
     @SubscribeEvent
@@ -170,5 +191,13 @@ public class ChunkCachingManager {
             instance.currentWorldId.set("test");
             instance.start();
         }
+    }
+
+    public Statue getStatue(){
+        return currentStatue.get();
+    }
+
+    public SqliteChunkDataBase getDatabase(){
+        return database;
     }
 }

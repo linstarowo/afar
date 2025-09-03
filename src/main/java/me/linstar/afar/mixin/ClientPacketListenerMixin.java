@@ -4,10 +4,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import me.linstar.afar.Afar;
 import me.linstar.afar.config.Config;
-import me.linstar.afar.event.ChunkCacheRadiusEvent;
-import me.linstar.afar.event.ClientLevelChangeEvent;
-import me.linstar.afar.event.ClientReceivedChunkPacketEvent;
-import me.linstar.afar.event.WorldIdEvent;
+import me.linstar.afar.event.*;
 import me.linstar.afar.network.WrappedPacket;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.protocol.game.*;
@@ -56,6 +53,7 @@ public class ClientPacketListenerMixin {
         if (!Config.isEnable()) return;
         if (packet instanceof WrappedPacket) return;
         info.cancel();
+        MinecraftForge.EVENT_BUS.post(new ClientReceivedForgetChunkEvent(packet));
     }
 
     @Inject(method = "handleLevelChunkWithLight", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/ClientPacketListener;updateLevelChunk(IILnet/minecraft/network/protocol/game/ClientboundLevelChunkPacketData;)V"))
