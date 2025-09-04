@@ -68,7 +68,9 @@ public class ChunkCachingManager {
     public void start(){
         if (currentStatue.get() == Statue.RUNNING || currentWorldId.get() == null) return;
         try {
-            database = SqliteChunkDataBase.create(FMLPaths.MODSDIR.get().resolve(this.currentWorldId.get() + ".db").toFile());
+            assert minecraft.level != null;
+            var dimension = minecraft.level.dimension().location().toString().replace(":", "_");
+            database = SqliteChunkDataBase.create(FMLPaths.MODSDIR.get().resolve( dimension + "_" + this.currentWorldId.get() + ".db").toFile());
             assert database != null;
             database.start();
 
@@ -81,19 +83,21 @@ public class ChunkCachingManager {
     }
 
     public void stop(){
-        if (currentStatue.get() == Statue.STOP) return;
-        try {
-            MinecraftForge.EVENT_BUS.unregister(this);
-            currentStatue.set(Statue.STOP);
-            currentCentre.set(null);
-            currentWorldId.set(null);
+        synchronized (this) {
+            if (currentStatue.get() == Statue.STOP) return;
+            try {
+                MinecraftForge.EVENT_BUS.unregister(this);
+                currentStatue.set(Statue.STOP);
+                currentCentre.set(null);
+                currentWorldId.set(null);
 
-            database.close();
-            receivedChunkDataQueue.clear();
-            chunkLoadQueue.clear();
-            loadedChunks.clear();
-        }catch (Exception e){
-            LOGGER.error("Error when stopping chunk caching", e);
+                database.close();
+                receivedChunkDataQueue.clear();
+                chunkLoadQueue.clear();
+                loadedChunks.clear();
+            } catch (Exception e) {
+                LOGGER.error("Error when stopping chunk caching", e);
+            }
         }
     }
 
@@ -103,6 +107,7 @@ public class ChunkCachingManager {
 
     @SubscribeEvent
     public void onDimensionChange(ClientLevelChangeEvent event){
+        Afar.sendDebugMessage("Dimension changed. Pausing");
         this.currentStatue.set(Statue.PAUSED);
         currentWorldId.set(null);
         currentCentre.set(null);
@@ -173,6 +178,7 @@ public class ChunkCachingManager {
     @SubscribeEvent
     public static void onWorldIdChange(WorldIdEvent event){
         if (!Config.isEnable()) return;
+        Afar.sendDebugMessage("Received worldId: %s".formatted(event.getID()));
         var statue = INSTANCE.get().currentStatue.get();
         if (statue == Statue.RUNNING){
             LOGGER.debug("Received World Id Packet Twice.");
@@ -182,16 +188,16 @@ public class ChunkCachingManager {
         INSTANCE.get().start();
     }
 
-    //Debug Entry
-    @SubscribeEvent
-    public static void onConnected(ClientPlayerNetworkEvent.LoggingIn event){
-        if (!Config.isEnable() || !Config.isDebug()) return;
-        var instance = INSTANCE.get();
-        if (instance.currentStatue.get() != Statue.RUNNING){
-            instance.currentWorldId.set("test");
-            instance.start();
-        }
-    }
+//    //Debug Entry
+//    @SubscribeEvent
+//    public static void onConnected(ClientPlayerNetworkEvent.LoggingIn event){
+//        if (!Config.isEnable() || !Config.isDebug()) return;
+//        var instance = INSTANCE.get();
+//        if (instance.currentStatue.get() != Statue.RUNNING){
+//            instance.currentWorldId.set("test");
+//            instance.start();
+//        }
+//    }
 
     public Statue getStatue(){
         return currentStatue.get();

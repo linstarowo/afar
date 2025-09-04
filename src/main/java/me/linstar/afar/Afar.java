@@ -5,6 +5,9 @@ import me.linstar.afar.command.AfarClientCommand;
 import me.linstar.afar.config.Config;
 import me.linstar.afar.event.ChunkCacheRadiusEvent;
 import me.linstar.afar.screen.ConfigScreen;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.ConfigScreenHandler;
@@ -66,6 +69,13 @@ public class Afar {
 
     public static int getServerRadius(){
         return serverRadius;
+    }
+
+    public static void sendDebugMessage(String message){
+        if (!Config.isDebug()) return;
+        var player= Minecraft.getInstance().player;
+        if (player == null) return;
+        player.sendSystemMessage(Component.literal("[Afar Debug]").withStyle(ChatFormatting.YELLOW).append(Component.literal(message).withStyle(ChatFormatting.GRAY)));
     }
 
     @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
