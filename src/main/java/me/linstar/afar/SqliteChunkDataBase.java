@@ -42,7 +42,6 @@ public class SqliteChunkDataBase {
 
     int chunkSavingCount = 0;
 
-
     SqliteChunkDataBase(File dataBaseFile) throws SQLException {
         var config = new SQLiteConfig();
 

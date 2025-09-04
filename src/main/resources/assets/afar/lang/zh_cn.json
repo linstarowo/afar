@@ -2,8 +2,8 @@
   "afar.config.title": "Afar 配置",
   "afar.config.option.enable": "Enable",
   "afar.config.option.enable.dic": "§c注意!§f 此模组不会在单人模式生效",
-  "afar.config.option.render_distance": "Render Distance",
-  "afar.config.option.render_distance.dic": "假区块的渲染距离",
+  "afar.config.option.render_distance": "加载距离",
+  "afar.config.option.render_distance.dic": "假区块的加载距离\n你需要修改视频设置中的渲染距离来看到假区块",
   "afar.config.option.debug": "Debug 模式",
   "afar.config.option.max_fake_chunk_loading": "加载限制",
   "afar.config.option.max_fake_chunk_loading.dic": "每Tick 加载加区块数目的最大值, 不宜过大或过小",
@@ -15,5 +15,8 @@
 
   "afar.command.check_running_statue": "Afar 未在运行",
   "afar.command.prepare_vacuum": "正在优化数据库, 可能面临卡顿",
-  "afar.command.vacuum_finished": "执行完成"
+  "afar.command.vacuum_finished": "执行完成",
+  "afar.command.database_statistic": "Afar 数据库统计信息",
+  "afar.command.database_size": "数据库大小: ",
+  "afar.command.saved_chunks": "保存的区块: "
 }
