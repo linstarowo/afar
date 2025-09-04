@@ -31,9 +31,9 @@ public class AfarClientCommand {
         var database = instance.getDatabase();
         int chunkCount = database.getChunkCount();
         int dataSize = database.getFileSize();
-        source.sendSystemMessage(Component.literal("数据库统计信息").withStyle(ChatFormatting.GOLD));
-        source.sendSystemMessage(Component.literal("保存的区块: ").withStyle(ChatFormatting.GRAY).append(Component.literal(String.valueOf(chunkCount)).withStyle(ChatFormatting.GREEN)));
-        source.sendSystemMessage(Component.literal("数据库大小: ").withStyle(ChatFormatting.GRAY).append(Component.literal(dataSize + "MB").withStyle(ChatFormatting.GREEN)));
+        source.sendSystemMessage(Component.translatable("afar.command.database_statistic").withStyle(ChatFormatting.GOLD));
+        source.sendSystemMessage(Component.translatable("afar.command.saved_chunks").withStyle(ChatFormatting.GRAY).append(Component.literal(String.valueOf(chunkCount)).withStyle(ChatFormatting.GREEN)));
+        source.sendSystemMessage(Component.translatable("afar.command.database_size").withStyle(ChatFormatting.GRAY).append(Component.literal(dataSize + "MB").withStyle(ChatFormatting.GREEN)));
     }
 
     public static void executeVacuum(CommandSourceStack source){
