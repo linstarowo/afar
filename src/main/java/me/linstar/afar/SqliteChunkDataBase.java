@@ -36,7 +36,7 @@ public class SqliteChunkDataBase {
 
     private final PreparedStatement insertStatement;
     private final PreparedStatement queryStatement;
-    private final SQLiteDataSource source = new SQLiteDataSource();;
+    private final SQLiteDataSource source = new SQLiteDataSource();
     private final ReentrantLock shutdownLock = new ReentrantLock();
     private final File dataFile;
 
@@ -96,7 +96,7 @@ public class SqliteChunkDataBase {
             connection.close();
             shutdownLock.unlock();
             return;
-        };
+        }
 
         var needToSave = instance.receivedChunkDataQueue;
         var needToLoad = instance.chunkLoadQueue;

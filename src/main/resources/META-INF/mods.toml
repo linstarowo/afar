@@ -16,10 +16,17 @@ mandatory = true
 versionRange = "${forge_version_range}" 
 ordering = "NONE"
 side = "CLIENT"
-[[dependencies."${mod_id}"]]
 
+[[dependencies."${mod_id}"]]
 modId = "minecraft"
 mandatory = true
 versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies."${mod_id}"]]
+modId = "sqlite_jdbc"
+mandatory = true
+versionRange = "*"
 ordering = "NONE"
 side = "CLIENT"
