@@ -16,7 +16,18 @@
   "afar.command.check_running_statue": "Afar is not running",
   "afar.command.prepare_vacuum": "Vacuuming, it will cause stuttering",
   "afar.command.vacuum_finished": "Finished",
+  "afar.command.prepare_drop": "Dropping all data, it will cause stuttering",
+  "afar.command.drop_finished": "Finished. It's time to book a plane ticket.",
   "afar.command.database_statistic": "Afar Database Statistic",
-  "afar.command.database_size": "Database Size: ",
-  "afar.command.saved_chunks": "Saved Chunks: "
+  "afar.command.database_size": " Database Size: ",
+  "afar.command.saved_chunks": " Saved Chunks: ",
+  "afar.command.running_time": " Running Hours: ",
+  "afar.command.average_load_count": " avg Chunk Load per tick: ",
+  "afar.command.average_tick_duration": " avg Tick Duration: ",
+  "afar.command.maximum": "max: ",
+
+  "afar.command.delete_command_info": "Delete chunk data saved before the specified database runtime (unit:hour)",
+  "afar.command.delete_time_too_big": "Input value is too large! You cannot delete the future data",
+  "afar.command.delete_finish": "Finished. Delete %s records.",
+  "afar.command.delete_failed": "Deleting Failed!"
 }

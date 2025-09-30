@@ -21,9 +21,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -36,11 +38,71 @@ public class SqliteChunkDataBase {
 
     private final PreparedStatement insertStatement;
     private final PreparedStatement queryStatement;
+    private final PreparedStatement updateTickStatement;
     private final SQLiteDataSource source = new SQLiteDataSource();
     private final ReentrantLock shutdownLock = new ReentrantLock();
+    private final TickRecorder recorder = new TickRecorder();
     private final File dataFile;
 
+    // 执行线程专用变量, 不考虑可见性
     int chunkSavingCount = 0;
+    long tick_count = 0L;
+    AtomicInteger tick_to_sec = new AtomicInteger(0);
+
+    // Shit code
+    public static class TickRecorder{
+        public static final int MAX_SIZE = 128;
+
+        final ConcurrentLinkedQueue<Integer> chunk_load_counts = new ConcurrentLinkedQueue<>();
+        int load_count;
+
+        final ConcurrentLinkedQueue<Double> tick_load_counts = new ConcurrentLinkedQueue<>();
+        int tick_count;
+
+        int max_load_counts = 0;
+        double max_tick_duration = 0;
+
+        void update(int loads, double duration){
+            if (loads == 0) return;
+            if (load_count >= MAX_SIZE) {
+                chunk_load_counts.poll();
+            }else {
+                load_count += 1;
+            }
+            chunk_load_counts.add(loads);
+
+            if (tick_count > MAX_SIZE) {
+                tick_load_counts.poll();
+            }else {
+                tick_count += 1;
+            }
+            tick_load_counts.add(duration);
+
+            if (loads > max_load_counts) max_load_counts = loads;
+            if (duration > max_tick_duration) max_tick_duration = duration;
+        }
+
+        public double get_average_tick_duration(){
+            double total = 0;
+            for (Double i : tick_load_counts) total += i;
+            return total / tick_count;
+        }
+
+        public double get_average_loads(){
+            double total = 0;
+            for (Integer i : chunk_load_counts) total += i;
+            return total / load_count;
+        }
+
+        public int get_max_load(){
+            return this.max_load_counts;
+        }
+
+        public double get_max_tick_duration(){
+            return this.max_tick_duration;
+        }
+
+    }
 
     SqliteChunkDataBase(File dataBaseFile) throws SQLException {
         var config = new SQLiteConfig();
@@ -66,16 +128,30 @@ public class SqliteChunkDataBase {
                     "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     "x INTEGER NOT NULL, " +
                     "z INTEGER NOT NULL, " +
+                    "tick_count INTEGER NOT NULL, " +
                     "chunk_data BLOB NOT NULL, " +
                     "CONSTRAINT uc_pos UNIQUE (x, z))"
             );
+            stmt.execute("CREATE TABLE IF NOT EXISTS tick_count (" +
+                    "id INTEGER PRIMARY KEY, " +
+                    "tick_count INTEGER NOT NULL)"
+            );
+
             stmt.execute("CREATE INDEX IF NOT EXISTS uc_pos_index ON data_table(x, z)");
             connection.commit();
         }
 
         //指令预加载
-        insertStatement = connection.prepareStatement("INSERT INTO data_table (x, z, chunk_data) VALUES (?, ?, ?) ON CONFLICT DO UPDATE SET chunk_data=?;");
+        insertStatement = connection.prepareStatement("INSERT INTO data_table (x, z, tick_count, chunk_data) VALUES (?, ?, ?, ?) ON CONFLICT DO UPDATE SET chunk_data=?;");
         queryStatement = connection.prepareStatement("SELECT chunk_data FROM data_table WHERE x=? AND z=?");
+        updateTickStatement = connection.prepareStatement("INSERT INTO tick_count (id, tick_count) VALUES (1, ?) ON CONFLICT DO UPDATE SET tick_count=?;");
+
+        try(Statement stmt = connection.createStatement(); ResultSet result = stmt.executeQuery("SELECT tick_count FROM tick_count WHERE id=1")) {
+            if (result.next()) {
+                tick_count = result.getLong("tick_count");
+                LOGGER.info("Getting tick count from database: %s".formatted(tick_count));
+            }
+        }
 
         scheduler = Executors.newSingleThreadScheduledExecutor();
     }
@@ -91,13 +167,20 @@ public class SqliteChunkDataBase {
             queryStatement.close();
             connection.commit();
             try(Statement stmt = connection.createStatement()){
-                stmt.execute("PRAGMA wal_checkpoint(FULL);");
+                stmt.execute("PRAGMA wal_checkpoint(FULL);");   //确保日志文件正常保存, 避免重新开启数据库时是锁定
             }
+            updateTickStatement.setLong(1, tick_count);
+            updateTickStatement.setLong(2, tick_count);
+            updateTickStatement.execute();
+            updateTickStatement.close();
+
+            connection.commit();
             connection.close();
             shutdownLock.unlock();
             return;
         }
 
+        var startTime = System.currentTimeMillis();
         var needToSave = instance.receivedChunkDataQueue;
         var needToLoad = instance.chunkLoadQueue;
         var loadedChunks = instance.loadedChunks;
@@ -118,8 +201,9 @@ public class SqliteChunkDataBase {
             var ba = out.toByteArray();
             insertStatement.setInt(1, data.x());
             insertStatement.setInt(2, data.z());
-            insertStatement.setBytes(3, ba);
+            insertStatement.setLong(3, tick_count);
             insertStatement.setBytes(4, ba);
+            insertStatement.setBytes(5, ba);
             insertStatement.addBatch();
             count ++;
         }
@@ -127,13 +211,10 @@ public class SqliteChunkDataBase {
 
         chunkSavingCount += count;
         if (chunkSavingCount >= Config.getSavingChunkThreshold()){
-            var time = System.currentTimeMillis();
             connection.commit();
-            LOGGER.debug("saved {} chunks in {} ms", chunkSavingCount, System.currentTimeMillis() - time);
             chunkSavingCount = 0;
         }
 
-        var time = System.currentTimeMillis();
         int loadCount = 0;
         for (int i = 0; i < Config.getMaxChunkLoadingPerTick(); i++) {
             var pos = needToLoad.poll();
@@ -170,17 +251,22 @@ public class SqliteChunkDataBase {
                 loadCount++;
             }
         }
-        if (loadCount != 0) LOGGER.debug("loaded {} chunks in {} ms", loadCount, System.currentTimeMillis() - time);
+        this.recorder.update(loadCount, System.currentTimeMillis() - startTime);
     }
 
     public void start(){
         scheduler.scheduleAtFixedRate(() -> {
             try{
                 this.tick();
+                if (this.tick_to_sec.incrementAndGet() >= 10) {
+                    this.tick_to_sec.set(0);
+
+                    this.tick_count += 1;
+                }
             }catch (Exception e){
                 LOGGER.error("Error when executing task", e);
             }
-        }, 0, 100, TimeUnit.MICROSECONDS);
+        }, 0, 100, TimeUnit.MILLISECONDS);
     }
 
     public void close(){
@@ -203,6 +289,27 @@ public class SqliteChunkDataBase {
         }
     }
 
+    public void runDrop(){
+        try(Statement stmt = connection.createStatement()){
+            stmt.execute("DELETE FROM data_table");
+            connection.commit();
+        }catch (Exception e){
+            LOGGER.error("Error when dropping database", e);
+        }
+    }
+
+    public int runDelete(int tc){
+        try(Statement stmt = connection.createStatement()){
+            int lines = stmt.executeUpdate("DELETE FROM data_table WHERE tick_count <= " + tc);
+            connection.commit();
+            return lines;
+        }catch (Exception e){
+            LOGGER.error("Error when deleting data", e);
+        }
+
+        return -1;
+    }
+
     public int getFileSize(){
         try {
             return (int) (dataFile.length() / 1024 / 1024);
@@ -221,6 +328,14 @@ public class SqliteChunkDataBase {
         }
 
         return 0;
+    }
+
+    public TickRecorder getRecorder(){
+        return this.recorder;
+    }
+
+    public double getRunningHours(){
+        return (double) this.tick_count / 3600;
     }
 
     public static SqliteChunkDataBase create(File dataFile) {

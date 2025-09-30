@@ -16,7 +16,18 @@
   "afar.command.check_running_statue": "Afar 未在运行",
   "afar.command.prepare_vacuum": "正在优化数据库, 可能面临卡顿",
   "afar.command.vacuum_finished": "执行完成",
+  "afar.command.prepare_drop": "正在清除缓存数据, 可能面临卡顿",
+  "afar.command.drop_finished": "删库跑路成功( ",
   "afar.command.database_statistic": "Afar 数据库统计信息",
-  "afar.command.database_size": "数据库大小: ",
-  "afar.command.saved_chunks": "保存的区块: "
+  "afar.command.database_size": " 数据库大小: ",
+  "afar.command.saved_chunks": " 保存的区块: ",
+  "afar.command.running_time": " 运行时间: ",
+  "afar.command.average_load_count": " 平均加载区块数: ",
+  "afar.command.average_tick_duration": " 平均Tick 时间: ",
+  "afar.command.maximum": "最大: ",
+
+  "afar.command.delete_command_info": "删除指定数据库运行时间前保存的区块数据 单位: 小时",
+  "afar.command.delete_time_too_big": "输入值过大!",
+  "afar.command.delete_finish": "执行完成, 删除了%s 条纪录",
+  "afar.command.delete_failed": "删除失败!"
 }
