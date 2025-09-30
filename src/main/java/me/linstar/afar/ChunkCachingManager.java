@@ -185,7 +185,7 @@ public class ChunkCachingManager {
             return;
         }
         INSTANCE.get().currentWorldId.set(event.getID());
-        INSTANCE.get().start();
+        Minecraft.getInstance().executeIfPossible(() -> INSTANCE.get().start()); //WorldIdEvent 将在Netty Thread fired. 此处意在确保start在客户端完成RespawnPacket的处理后再启动新数据库
     }
 
 //    //Debug Entry
