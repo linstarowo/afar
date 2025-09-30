@@ -145,9 +145,7 @@ public class ChunkCachingManager {
             //将旧区块卸载
             loadedChunks.removeIf(pos -> {
                 if (nev.contain(pos.x, pos.z)) return false;
-                minecraft.executeIfPossible(() -> {
-                    connection.handleForgetLevelChunk(new WrappedForgetChunkPacket(pos.x, pos.z));
-                });
+                minecraft.executeIfPossible(() -> connection.handleForgetLevelChunk(new WrappedForgetChunkPacket(pos.x, pos.z)));
                 return true;
             });
         }

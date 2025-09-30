@@ -39,7 +39,6 @@ public class SqliteChunkDataBase {
     private final PreparedStatement insertStatement;
     private final PreparedStatement queryStatement;
     private final PreparedStatement updateTickStatement;
-    private final SQLiteDataSource source = new SQLiteDataSource();
     private final ReentrantLock shutdownLock = new ReentrantLock();
     private final TickRecorder recorder = new TickRecorder();
     private final File dataFile;
@@ -113,6 +112,7 @@ public class SqliteChunkDataBase {
         config.setSynchronous(SQLiteConfig.SynchronousMode.OFF);
         config.setPageSize(1024);
 
+        SQLiteDataSource source = new SQLiteDataSource();
         source.setConfig(new SQLiteConfig());
         source.setUrl("jdbc:sqlite:" + dataBaseFile.toString().replace("\\", "/"));
         dataFile = dataBaseFile;
@@ -339,7 +339,10 @@ public class SqliteChunkDataBase {
     }
 
     public static SqliteChunkDataBase create(File dataFile) {
-        if (!dataFile.exists()) dataFile.getParentFile().mkdirs();
+        if (!dataFile.exists()){
+            boolean result = dataFile.getParentFile().mkdirs();
+            if (!result) LOGGER.error("Failed to create data file");
+        }
 
         try{
             return new SqliteChunkDataBase(dataFile);

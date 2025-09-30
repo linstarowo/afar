@@ -2,7 +2,6 @@ package me.linstar.afar.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.FloatArgumentType;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
 import me.linstar.afar.ChunkCachingManager;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
